@@ -2,7 +2,6 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import sqlite3
-import subprocess
 import matplotlib.pyplot as plt
 import seaborn as sns
 from datetime import datetime
@@ -25,126 +24,140 @@ def save_to_db(title, category, value, summary):
     conn.commit()
     conn.close()
 
-# --- 2. PDF MOTORU ---
+# --- 2. GELİŞMİŞ PDF MOTORU (SENARYO DESTEKLİ) ---
 class RiskReport(FPDF):
     def header(self):
         self.set_font('Arial', 'B', 15)
-        self.cell(0, 10, 'QUANTUM RISK MASTER - ANALIZ RAPORU', 0, 1, 'C')
+        self.cell(0, 10, 'QUANTUM RISK MASTER - STRATEJIK RAPOR', 0, 1, 'C')
         self.ln(10)
 
-def generate_pdf(title, category, value, summary):
+def generate_pdf_v4(title, category, value, summary, scenario_df=None):
     pdf = RiskReport()
     pdf.add_page()
-    pdf.set_font("Arial", size=12)
-    clean_summary = summary.replace('ı','i').replace('ğ','g').replace('ü','u').replace('ş','s').replace('ö','o').replace('ç','c').replace('İ','I')
-    pdf.cell(200, 10, txt=f"Rapor Tarihi: {datetime.now().strftime('%d/%m/%Y %H:%M')}", ln=1)
-    pdf.cell(200, 10, txt=f"Proje: {title}", ln=1)
-    pdf.cell(200, 10, txt=f"Kategori: {category}", ln=1)
-    pdf.ln(5)
-    pdf.set_font("Arial", 'B', 14)
-    pdf.cell(200, 10, txt=f"HESAPLANAN DEGER: {value:,.2f} TL", ln=1)
-    pdf.ln(5)
     pdf.set_font("Arial", size=11)
-    pdf.multi_cell(0, 10, txt=f"Detaylar:\n{clean_summary}")
+    
+    # Karakter temizleme
+    def clean(t): return str(t).replace('ı','i').replace('ğ','g').replace('ü','u').replace('ş','s').replace('ö','o').replace('ç','c').replace('İ','I')
+    
+    pdf.cell(200, 10, txt=f"Rapor Tarihi: {datetime.now().strftime('%d/%m/%Y %H:%M')}", ln=1)
+    pdf.cell(200, 10, txt=f"Analiz Edilen: {clean(title)}", ln=1)
+    pdf.ln(5)
+    
+    pdf.set_font("Arial", 'B', 14)
+    pdf.cell(200, 10, txt=f"ANA SONUC: {value:,.2f} TL", ln=1)
+    pdf.ln(5)
+    
+    pdf.set_font("Arial", size=11)
+    pdf.multi_cell(0, 8, txt=f"Yonetici Ozeti: {clean(summary)}")
+    pdf.ln(10)
+
+    # Senaryo Tablosu Ekleme
+    if scenario_df is not None:
+        pdf.set_font("Arial", 'B', 12)
+        pdf.cell(0, 10, "STRES TESTI SENARYOLARI", ln=1)
+        pdf.set_font("Arial", 'B', 10)
+        # Header
+        pdf.cell(60, 10, "Senaryo", 1)
+        pdf.cell(60, 10, "Potansiyel Kayip (TL)", 1)
+        pdf.ln()
+        # Data
+        pdf.set_font("Arial", size=10)
+        for _, row in scenario_df.iterrows():
+            pdf.cell(60, 10, clean(row['Senaryo']), 1)
+            pdf.cell(60, 10, f"{row['Kayıp']:,.2f}", 1)
+            pdf.ln()
+            
     return pdf.output(dest='S').encode('latin-1')
 
-# --- 3. YARDIMCI BİLEŞENLER ---
+# --- 3. YARDIMCI BİLEŞEN ---
 def precise_input(label, min_v, max_v, default_v, step_v, key_id):
     st.write(f"**{label}**")
     col_s1, col_s2 = st.columns([3, 1])
     with col_s2:
-        num_val = st.number_input(f"n_{key_id}", min_value=float(min_v), max_value=float(max_v), 
-                                  value=float(default_v), step=float(step_v), label_visibility="collapsed")
+        num_val = st.number_input(f"n_{key_id}", min_value=float(min_v), max_value=float(max_v), value=float(default_v), step=float(step_v), label_visibility="collapsed")
     with col_s1:
-        val = st.slider(f"s_{key_id}", min_value=float(min_v), max_value=float(max_v), 
-                        value=num_val, step=float(step_v), label_visibility="collapsed")
+        val = st.slider(f"s_{key_id}", min_value=float(min_v), max_value=float(max_v), value=num_val, step=float(step_v), label_visibility="collapsed")
     return val
 
-# --- 4. ANA PROGRAM ---
-st.set_page_config(page_title="Quantum Ultimate Suite", layout="wide")
+# --- 4. ANA ARAYÜZ ---
+st.set_page_config(page_title="Quantum Ultimate v4.1", layout="wide")
 init_db()
 
 st.sidebar.title("💎 Quantum Ultimate")
-module = st.sidebar.selectbox("Modüller", 
-    ["🛡️ Aktüeryal Tazminat", "💰 Yatırım & NPV", "🏦 Kredi Riski (Basel III)", "📜 Arşiv"])
+module = st.sidebar.selectbox("Modüller", ["🛡️ Aktüeryal Tazminat", "💰 Yatırım & NPV", "🏦 Kredi Riski (Basel III)", "📜 Arşiv"])
 
-# --- MODÜL: AKTÜERYAL ---
 if module == "🛡️ Aktüeryal Tazminat":
-    st.title("🛡️ Aktüeryal Tazminat Hesabı")
+    st.title("🛡️ Aktüeryal Tazminat")
     c1, c2 = st.columns(2)
     with c1:
-        name = st.text_input("Dosya Adı", "Vaka 001")
-        age = st.number_input("Yaş", 0, 90, 35)
-        income = st.number_input("Aylık Net Gelir", value=45000)
+        name = st.text_input("Dosya No", "2026/AKT-01")
+        age = st.number_input("Yas", 0, 90, 35)
+        income = st.number_input("Aylik Gelir", value=45000)
         rate = precise_input("Teknik Faiz (%)", 0.0, 20.0, 9.0, 0.01, "act")
     with c2:
         rem = max(0, 75 - age)
         v = 1 / (1 + (rate/100))
         annuity = (1 - v**rem) / (1 - v) if rate > 0 else rem
         total = annuity * income * 12
-        st.metric("Hesaplanan Tazminat", f"{total:,.2f} TL")
-        if st.button("Kaydet ve Raporla"):
-            summary = f"Yas {age} icin %{rate} faizle hesaplanan yukumluluk."
-            save_to_db(name, "Aktueryal", total, summary)
-            st.download_button("📥 PDF Indir", data=generate_pdf(name, "Aktueryal", total, summary), file_name=f"{name}.pdf")
+        st.metric("Toplam Yükümlülük", f"{total:,.2f} TL")
+        if st.button("Kaydet ve PDF Üret"):
+            save_to_db(name, "Aktueryal", total, f"Yas {age}, Faiz %{rate}")
+            st.download_button("📥 PDF Raporu", data=generate_pdf_v4(name, "Aktueryal", total, "Aktueryal tazminat hesabi."), file_name=f"{name}.pdf")
 
-# --- MODÜL: YATIRIM & NPV (EKLEDİĞİMİZ KISIM) ---
 elif module == "💰 Yatırım & NPV":
-    st.title("💰 Yatırım Analizi ve Net Bugünkü Değer (NPV)")
-    col1, col2 = st.columns([1, 1])
-    
-    with col1:
-        proje_adi = st.text_input("Proje/Yatırım Adı", "Güneş Enerjisi Santrali")
-        initial_investment = st.number_input("Başlangıç Yatırım Maliyeti (TL)", value=1000000, step=50000)
-        discount_rate = precise_input("İskonto Oranı (WACC %)", 0.0, 50.0, 15.0, 0.1, "npv_rate")
-        years = st.slider("Analiz Süresi (Yıl)", 1, 20, 5)
-        
-    with col2:
-        st.write("**Yıllık Beklenen Net Nakit Akışları**")
-        cash_flows = []
-        for i in range(years):
-            cf = st.number_input(f"Yıl {i+1} Nakit Akışı (TL)", value=300000, key=f"cf_{i}")
-            cash_flows.append(cf)
-        
-        # NPV Hesaplama
-        npv = -initial_investment
-        for t, cf in enumerate(cash_flows):
-            npv += cf / (1 + (discount_rate/100))**(t+1)
-        
-        st.divider()
-        if npv > 0:
-            st.success(f"PROJE KARLI: NPV = {npv:,.2f} TL")
-            status = "Yatirim yapilabilir (Pozitif NPV)."
-        else:
-            st.error(f"PROJE ZARARDA: NPV = {npv:,.2f} TL")
-            status = "Yatirim verimli degil (Negatif NPV)."
-
-    if st.button("📊 Yatırım Analizini Kaydet ve Raporla"):
-        summary = f"Maliyet: {initial_investment} TL, Sure: {years} yil, WACC: %{discount_rate}. {status}"
-        save_to_db(proje_adi, "Yatirim-NPV", npv, summary)
-        st.download_button("📥 Analiz Raporunu İndir", data=generate_pdf(proje_adi, "NPV Analizi", npv, summary), file_name=f"{proje_adi}_NPV.pdf")
-
-# --- MODÜL: KREDİ RİSKİ ---
-elif module == "🏦 Kredi Riski (Basel III)":
-    st.title("🏦 Basel III Kredi Riski Analizi")
+    st.title("💰 Yatırım ve NPV Analizi")
     c1, c2 = st.columns(2)
     with c1:
-        client = st.text_input("Müşteri", "Kurumsal Portföy")
-        ead = st.number_input("Risk Tutarı (EAD)", value=5000000)
+        p_name = st.text_input("Proje Ismi", "Yatirim-A")
+        inv = st.number_input("Ilk Yatirim", value=1000000)
+        disc = precise_input("Iskonto (%)", 0.0, 50.0, 15.0, 0.1, "npv")
+        years = st.slider("Vade (Yil)", 1, 10, 5)
+    with c2:
+        cfs = [st.number_input(f"Yil {i+1}", value=300000, key=f"c_{i}") for i in range(years)]
+        npv = -inv + sum([cf / (1 + (disc/100))**(t+1) for t, cf in enumerate(cfs)])
+        st.metric("NPV Sonucu", f"{npv:,.2f} TL")
+        if st.button("Kaydet"):
+            save_to_db(p_name, "NPV", npv, f"Maliyet: {inv}")
+            st.success("Arsive eklendi.")
+
+elif module == "🏦 Kredi Riski (Basel III)":
+    st.title("🏦 Kredi Riski ve Stres Testi")
+    c1, c2 = st.columns(2)
+    with c1:
+        client = st.text_input("Musteri", "Global Holding")
+        ead = st.number_input("Risk Tutari (EAD)", value=5000000)
         pd_val = precise_input("PD (%)", 0.1, 20.0, 5.0, 0.05, "pd")
         lgd_val = precise_input("LGD (%)", 10.0, 100.0, 45.0, 0.1, "lgd")
     with c2:
         el = (pd_val/100) * (lgd_val/100) * ead
         st.metric("Beklenen Kayıp (EL)", f"{el:,.2f} TL")
-        if st.button("Kaydet ve PDF Üret"):
-            summary = f"EAD: {ead} TL, PD: %{pd_val}, LGD: %{lgd_val} bazli Basel III analizi."
-            save_to_db(client, "Kredi Riski", el, summary)
-            st.download_button("📥 Raporu İndir", data=generate_pdf(client, "Kredi Riski", el, summary), file_name="kredi_rapor.pdf")
 
-# --- MODÜL: ARŞİV ---
+    st.divider()
+    st.subheader("📉 Senaryo Bazlı Karşılaştırmalı Rapor")
+    
+    # Senaryo Hazırlama
+    scenarios = {"İyimser": {"p": 0.5, "l": 0.8}, "Beklenen": {"p": 1.0, "l": 1.0}, "Kötümser": {"p": 2.5, "l": 1.5}}
+    s_data = []
+    for sn, m in scenarios.items():
+        s_el = (min(pd_val * m["p"], 100)/100) * (min(lgd_val * m["l"], 100)/100) * ead
+        s_data.append({"Senaryo": sn, "Kayıp": s_el})
+    df_s = pd.DataFrame(s_data)
+    
+    cola, colb = st.columns(2)
+    with cola: st.table(df_s)
+    with colb:
+        fig, ax = plt.subplots(figsize=(6, 3))
+        ax.bar(df_s["Senaryo"], df_s["Kayıp"], color=['green', 'blue', 'red'])
+        st.pyplot(fig)
+
+    if st.button("📄 Arşive Kaydet ve Detaylı PDF Üret"):
+        summary = f"EAD: {ead} TL bazli analiz. Kotumser senaryoda ciddi risk artisi gözlemlenmiştir."
+        save_to_db(client, "Kredi Riski", el, summary)
+        pdf_bytes = generate_pdf_v4(client, "Risk", el, summary, df_s)
+        st.download_button("📥 Detaylı Analiz PDF'i", data=pdf_bytes, file_name=f"{client}_Analiz.pdf")
+
 elif module == "📜 Arşiv":
-    st.title("📜 Kayıtlı Analizler")
+    st.title("📜 Analiz Arşivi")
     conn = sqlite3.connect('quantum_ultimate.db')
-    df = pd.read_sql_query("SELECT * FROM risk_logs ORDER BY date DESC", conn)
-    st.dataframe(df, use_container_width=True)
+    st.dataframe(pd.read_sql_query("SELECT * FROM risk_logs ORDER BY date DESC", conn), use_container_width=True)
     conn.close()
