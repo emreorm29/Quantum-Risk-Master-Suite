@@ -22,3 +22,10 @@ Bu uygulama, deterministik aktüeryal hesaplamaları (tazminat modelleri) ve sto
 - **Görselleştirme:** Matplotlib, Seaborn
 - **Raporlama:** FPDF2
 - **İşletim Sistemi:** Arch Linux (Wayland)
+
+## 📦 Kurulum ve Çalıştırma
+Projeyi kendi ortamınızda çalıştırmak için:
+
+1. Depoyu klonlayın:
+   ```bash
+   git clone [https://github.com/kullaniciadi/proje-adi.git](https://github.com/kullaniciadi/proje-adi.git)
