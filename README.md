@@ -23,4 +23,9 @@ Bu uygulama, deterministik aktüeryal hesaplamaları (tazminat modelleri) ve sto
 - **Raporlama:** FPDF2
 - **İşletim Sistemi:** Arch Linux (Wayland)
 
+🔐 Demo Erişimi
+
+    Kullanıcı: admin
+
+    Şifre: 1234
 
