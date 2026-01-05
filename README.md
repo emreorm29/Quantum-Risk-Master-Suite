@@ -1,31 +1,20 @@
-# 💎 Quantum Risk Master: Black Edition v2.1
+# 🛡️ Quantum Risk Master Suite - IFRS 17 Actuarial Terminal
 
-Arch Linux ortamında geliştirilmiş, canlı piyasa verileriyle entegre çalışan profesyonel Aktüerya ve Stratejik Risk Yönetimi Terminali.
+Bu proje, bir sigorta şirketinin hasar karşılıklarını (Reserving) ve sermaye yeterliliğini analiz etmek için geliştirilmiş uçtan uca bir **Aktüeryal Karar Destek Sistemi**'dir.
 
-## 🚀 Proje Genel Bakış
-Bu uygulama, deterministik aktüeryal hesaplamaları (tazminat modelleri) ve stokastik risk projeksiyonlarını (Monte Carlo) tek bir güvenli çatı altında toplar. Finansal karar alıcılar için gerçek zamanlı piyasa verilerini kullanarak kurumsal raporlama sunar.
+## 🚀 Öne Çıkan Özellikler
+- **Stokastik Modelleme:** Monte Carlo simülasyonu ile 10.000+ senaryo üzerinden hasar frekansı ve şiddeti tahmini. [cite: 2026-01-04]
+- **IFRS 17 Uyumluluğu:** İskontolu nakit akışları (PV) ve %95 - %99 güven aralıklarında Risk Adjustment (RA) hesaplamaları.
+- **Reasürans Modülü:** Excess of Loss (XoL) yapısı ile risk transfer optimizasyonu ve şirket retansiyon limit analizi.
+- **Mortalite Analizi:** Gompertz-Makeham yasası kullanılarak yaşam tablosu ve ölüm hızı projeksiyonları. [cite: 2026-01-04]
 
-## 🛠️ Temel Özellikler
-- **🛡️ Aktüeryal Tazminat Modülü:** TRH-2010 tabloları ve dinamik teknik faiz oranları ile tazminat yükümlülüğü hesaplama.
-- **💰 Monte Carlo Simülasyonu:** Yatırım projeksiyonları için 1.000+ senaryolu olasılık dağılım analizi.
-- **🏦 Basel III Stres Testi:** Kredi riski için PD ve LGD parametreleri üzerinden iyimser/kötümser senaryo analizleri.
-- **📊 Yönetici Kokpiti:** SQLite veritabanı üzerindeki tüm analizlerin kategorik dağılımı ve toplam risk hacmi takibi.
-- **📈 Canlı Veri Entegrasyonu:** `yfinance` API ile gerçek zamanlı USD/TRY kuru ve piyasa göstergeleri.
-- **🔐 Güvenli Erişim:** Yetkisiz erişimi engelleyen SafeGate giriş ekranı.
-- **📄 Kurumsal Raporlama:** Otomatik grafikli, logolu ve temizlenmiş karakter setli PDF raporlama motoru.
+## 🛠️ Teknik Altyapı
+- **Backend:** FastAPI (Python) ile yüksek performanslı mikroservis mimarisi.
+- **Frontend:** Streamlit ile interaktif aktüeryal dashboard.
+- **Veri:** SQLite üzerinde kalıcı raporlama ve trend analizi.
+- **Dağıtım:** Docker ve Docker Compose ile her ortamda (Cloud/Local) tek komutla kurulum. [cite: 2026-01-04]
 
-## 🧰 Teknik Yığın (Tech Stack)
-- **Dil:** Python 3.13
-- **Arayüz:** Streamlit
-- **Veritabanı:** SQLite3
-- **Veri Analizi:** Pandas, NumPy
-- **Görselleştirme:** Matplotlib, Seaborn
-- **Raporlama:** FPDF2
-- **İşletim Sistemi:** Arch Linux (Wayland)
-
-🔐 Demo Erişimi
-
-    Kullanıcı: admin
-
-    Şifre: 1234
-
+## 📦 Kurulum
+Proje klasöründe terminali açın ve çalıştırın:
+```bash
+docker-compose up --build
