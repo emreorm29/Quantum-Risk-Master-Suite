@@ -1,0 +1,11 @@
+version: '3.8'
+
+services:
+  aktuer_app:
+    build: .
+    ports:
+      - "8000:8000"  # Backend (FastAPI) portu
+      - "8501:8501"  # Frontend (Streamlit) portu
+    volumes:
+      - .:/app       # Kodda değişiklik yaparsan anında yansıması için
+    restart: always
